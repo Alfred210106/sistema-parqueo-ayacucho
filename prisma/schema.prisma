@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Usuario del sistema: conductores y administradores de cochera
+model User {
+  id        Int       @id @default(autoincrement())
+  nombre    String
+  email     String    @unique
+  password  String // scrypt con salt: "salt:hash"
+  rol       String    @default("CONDUCTOR") // CONDUCTOR | ADMIN
+  reservas  Reserva[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Cochera física del Centro Histórico de Ayacucho
+model Cochera {
+  id            Int       @id @default(autoincrement())
+  nombre        String
+  direccion     String
+  referencia    String
+  totalEspacios Int
+  disponibles   Int
+  tarifaHora    Float
+  horario       String
+  telefono      String
+  lat           Float
+  lng           Float
+  reservas      Reserva[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Reserva realizada por un conductor (simulación de ingreso vehicular)
+model Reserva {
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  placa     String
+  cocheraId Int
+  cochera   Cochera  @relation(fields: [cocheraId], references: [id])
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  horas     Int
+  monto     Float
+  estado    String   @default("ACTIVA") // ACTIVA | FINALIZADA | CANCELADA
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cocheraId])
+  @@index([estado])
+  @@index([userId])
+}
